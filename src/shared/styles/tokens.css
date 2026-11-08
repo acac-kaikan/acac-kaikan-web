@@ -30,10 +30,10 @@
   /* Tipografia */
   --fonte: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
-  --texto-titulo: 2rem;
-  --texto-subtitulo: 1.125rem;
-  --texto-corpo: 1rem;
-  --texto-auxiliar: 0.875rem;
+  --texto-titulo: 2.5rem;
+  --texto-subtitulo: 1.75rem;
+  --texto-corpo: 1.5rem;
+  --texto-auxiliar: 1.25rem;
   --peso-titulo: 700;
   --peso-botao: 600;
 

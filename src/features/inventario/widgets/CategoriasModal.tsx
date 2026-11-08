@@ -176,7 +176,7 @@ export default function CategoriasModal({ onClose }: CategoriasModalProps) {
       <Modal
         title="Menu de categorias"
         onClose={onClose}
-        size="medium"
+        size="xlarge"
         footer={
           <Botao variant="secondary" onClick={onClose}>
             Fechar

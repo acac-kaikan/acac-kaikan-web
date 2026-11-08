@@ -177,7 +177,7 @@ export default function CaixaPage() {
               <ul className={styles.list}>
                 {entries.map((entry) => (
                   <li className={styles.row} key={entry.id}>
-                    <strong className={styles.rowValue}>
+                    <strong>
                       {formatarMoeda(entry.valor)}
                     </strong>
                     <span className={styles.rowPayment}>

@@ -60,7 +60,7 @@ export default function ResumoVenda({
                   onClick={() => removerItem(item.menuItemId)}
                   aria-label={`Remover ${item.name} da venda`}
                 >
-                  <Icone name="trash" size={16} />
+                  <Icone name="trash" size={24} />
                 </button>
               </div>
               <div className={styles.itemTotal}>

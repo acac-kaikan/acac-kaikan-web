@@ -30,7 +30,7 @@
   padding: var(--espaco-12) var(--espaco-16);
   border-bottom: 1px solid var(--borda);
   color: var(--texto);
-  font-size: var(--texto-corpo);
+  font-size: var(--texto-auxiliar);
   vertical-align: middle;
 }
 

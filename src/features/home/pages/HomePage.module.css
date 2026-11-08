@@ -77,14 +77,14 @@
 }
 
 .sectionTitle {
-  font-size: 1.375rem;
+  font-size: var(--texto-corpo);
   font-weight: 700;
 }
 
 .shortcutGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--espaco-16);
+  gap: var(--espaco-24);
 }
 
 .shortcut {

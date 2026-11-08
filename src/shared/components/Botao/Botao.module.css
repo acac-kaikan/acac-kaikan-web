@@ -72,7 +72,7 @@
 
 .compact {
   min-height: 36px;
-  padding: 6px var(--espaco-12);
+  padding: var(--espaco-12);
   font-size: var(--texto-auxiliar);
 }
 

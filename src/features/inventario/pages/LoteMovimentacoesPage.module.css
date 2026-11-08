@@ -35,7 +35,7 @@
 
 .summary dt {
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: 1rem;
 }
 
 .summary dd {
