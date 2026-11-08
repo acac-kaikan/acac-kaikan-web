@@ -16,6 +16,8 @@ import {
 } from "../hooks/useInventario";
 import styles from "./ModaisInventario.module.css";
 
+const TIPOS_IMAGEM_ACEITOS = ["image/jpeg", "image/png", "image/webp"];
+
 interface ProdutoFormValues {
   nome: string;
   descricao?: string;
@@ -71,8 +73,9 @@ export default function ProdutoFormModal({
   function handleFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setServerError("Selecione um arquivo de imagem.");
+    if (!TIPOS_IMAGEM_ACEITOS.includes(file.type)) {
+      setServerError("Formato de imagem não aceito. Use PNG, JPG ou WEBP.");
+      event.target.value = "";
       return;
     }
     const reader = new FileReader();
@@ -190,7 +193,7 @@ export default function ProdutoFormModal({
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept={TIPOS_IMAGEM_ACEITOS.join(",")}
               className="sr-only"
               onChange={handleFile}
               aria-label="Selecionar imagem do produto"
