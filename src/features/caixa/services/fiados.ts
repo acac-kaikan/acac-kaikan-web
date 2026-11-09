@@ -7,6 +7,14 @@ import type {
   RespostaFiados,
 } from "../models";
 
+interface PaginaApi<T> {
+  itens: T[];
+  page: number;
+  size: number;
+  totalItens: number;
+  totalPaginas: number;
+}
+
 interface FiadoApi {
   id: number;
   nomeDevedor: string;
@@ -56,32 +64,40 @@ function paraFiadoEvento(item: FiadoApi, eventId: number): Fiado {
   };
 }
 
+function paraPaginadoFiados(
+  pagina: PaginaApi<FiadoApi>,
+  eventId: number,
+): RespostaFiados {
+  const items = pagina.itens.map((item) => paraFiadoEvento(item, eventId));
+  const pendentes = items.filter((fiado) => fiado.status === "pending");
+
+  return {
+    items,
+    page: pagina.page + 1,
+    pageSize: pagina.size,
+    total: pagina.totalItens,
+    totalPages: pagina.totalPaginas,
+    pendingCount: pendentes.length,
+    openAmount: pendentes.reduce((acc, fiado) => acc + fiado.remaining, 0),
+  };
+}
+
 export async function listarFiados(
   params: ParametrosFiados,
 ): Promise<RespostaFiados> {
   if (params.eventId) {
-    const fiados = await listarFiadosEvento(
-      params.eventId,
-      mapearSituacaoApi(params.status),
+    const { data } = await api.get<PaginaApi<FiadoApi>>(
+      `/eventos/${params.eventId}/fiados`,
+      {
+        params: {
+          situacao: mapearSituacaoApi(params.status),
+          page: Math.max(0, (params.page || 1) - 1),
+          size: params.pageSize || 6,
+        },
+      },
     );
 
-    const pageSize = params.pageSize || 6;
-    const page = params.page || 1;
-    const total = fiados.length;
-    const totalPages = Math.ceil(total / pageSize);
-    const inicio = Math.max(0, (page - 1) * pageSize);
-
-    return {
-      items: fiados.slice(inicio, inicio + pageSize),
-      page,
-      pageSize,
-      total,
-      totalPages,
-      pendingCount: fiados.filter((fiado) => fiado.status === "pending").length,
-      openAmount: fiados
-        .filter((fiado) => fiado.status === "pending")
-        .reduce((acc, fiado) => acc + fiado.remaining, 0),
-    };
+    return paraPaginadoFiados(data, params.eventId);
   }
 
   // Fluxo legado (fiados gerais / relatórios)
@@ -93,10 +109,28 @@ export async function listarFiadosEvento(
   eventId: number,
   situacao?: string,
 ): Promise<Fiado[]> {
-  const { data } = await api.get<FiadoApi[]>(`/eventos/${eventId}/fiados`, {
-    params: { situacao: situacao || undefined },
-  });
-  return data.map((item) => paraFiadoEvento(item, eventId));
+  const pageSize = 100;
+  let page = 0;
+  let totalPages = 1;
+  const items: Fiado[] = [];
+
+  while (page < totalPages) {
+    const { data } = await api.get<PaginaApi<FiadoApi>>(
+      `/eventos/${eventId}/fiados`,
+      {
+        params: {
+          situacao: situacao || undefined,
+          page,
+          size: pageSize,
+        },
+      },
+    );
+    items.push(...data.itens.map((item) => paraFiadoEvento(item, eventId)));
+    totalPages = Math.max(1, data.totalPaginas);
+    page += 1;
+  }
+
+  return items;
 }
 
 export async function quitarFiado(
