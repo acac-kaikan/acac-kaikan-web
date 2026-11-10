@@ -212,15 +212,23 @@ export async function criarProduto(
   payload: CriarProdutoPayload,
   arquivo?: File | null,
 ): Promise<Produto> {
-  const { data } = await api.post<ProdutoResponseApi>("/produtos", payload);
-  const produto = normalizarProduto(data);
-
-  if (arquivo) {
-    const url = await enviarFotoProduto(produto.id, arquivo);
-    return { ...produto, fotoUrl: resolverUrlApi(url) };
+  if (!arquivo) {
+    const { data } = await api.post<ProdutoResponseApi>("/produtos", payload);
+    return normalizarProduto(data);
   }
 
-  return produto;
+  // Dados e foto vão na mesma requisição: se a imagem for inválida, nada é cadastrado.
+  const formData = new FormData();
+  formData.append(
+    "produto",
+    new Blob([JSON.stringify(payload)], { type: "application/json" }),
+  );
+  formData.append("arquivo", arquivo);
+
+  const { data } = await api.post<ProdutoResponseApi>("/produtos", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return normalizarProduto(data);
 }
 
 export async function criarMovimentacao(
