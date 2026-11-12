@@ -92,8 +92,7 @@ export interface ParametrosEventos extends ParametrosPaginacao {
 
 export type RespostaEventos = Paginado<Evento>;
 
-export interface RespostaCardapio {
-  items: ItemCardapio[];
+export interface RespostaCardapio extends Paginado<ItemCardapio> {
   categories: string[];
 }
 

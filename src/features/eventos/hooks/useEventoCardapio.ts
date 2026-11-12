@@ -6,7 +6,6 @@ const PAGE_SIZE = 8;
 
 export function useEventoCardapio(id?: number) {
   const { data: event } = useEventoQuery(id);
-  const { data, isLoading, isError, refetch } = useEventoCardapioQuery(id);
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -17,34 +16,23 @@ export function useEventoCardapio(id?: number) {
   const [addType, setAddType] = useState<OrigemProdutoEvento>("ESTOQUE");
   const [categoriesOpen, setCategoriesOpen] = useState(false);
 
+  const { data, isLoading, isError, refetch } = useEventoCardapioQuery(id, {
+    search,
+    category: category || undefined,
+    page,
+    pageSize: PAGE_SIZE,
+  });
+
   const items = useMemo(() => data?.items || [], [data]);
   const categories = useMemo(() => data?.categories || [], [data]);
 
   const filtered = useMemo(() => {
-    const term = search
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-    return items
-      .filter((item) => !category || item.categoria === category)
-      .filter((item) => !type || item.origem === type)
-      .filter((item) =>
-        term
-          ? item.nome
-              .toLowerCase()
-              .normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "")
-              .includes(term)
-          : true,
-      );
-  }, [items, category, type, search]);
+    return items.filter((item) => !type || item.origem === type);
+  }, [items, type]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const visible = filtered.slice(
-    (safePage - 1) * PAGE_SIZE,
-    safePage * PAGE_SIZE,
-  );
+  const totalPages = data?.totalPages ?? 1;
+  const safePage = Math.min(data?.page ?? 1, totalPages);
+  const visible = filtered;
 
   function runSearch() {
     setSearch(searchDraft.trim());

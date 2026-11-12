@@ -117,21 +117,6 @@ function filtrarPorEstoque(items: Produto[], stock?: string) {
   });
 }
 
-function paginar<T>(items: T[], page = 1, pageSize = 6): Paginado<T> {
-  const pagina = Math.max(1, page || 1);
-  const tamanho = Math.max(1, pageSize || 6);
-  const total = items.length;
-  const totalPages = Math.max(1, Math.ceil(total / tamanho));
-  const offset = (pagina - 1) * tamanho;
-  return {
-    items: items.slice(offset, offset + tamanho),
-    page: pagina,
-    pageSize: tamanho,
-    total,
-    totalPages,
-  };
-}
-
 function paraPaginado<I, O>(
   pagina: PaginaApi<I>,
   mapItem: (item: I) => O,
@@ -148,9 +133,11 @@ function paraPaginado<I, O>(
 export async function listarProdutos(
   params: ParametrosProdutos,
 ): Promise<RespostaProdutos> {
-  const { data } = await api.get<ProdutoResponseApi[]>("/produtos", {
+  const { data } = await api.get<PaginaApi<ProdutoResponseApi>>("/produtos", {
     params: {
       q: params.search || undefined,
+      page: Math.max(0, (params.page || 1) - 1),
+      size: params.pageSize || 6,
       categoriaId: params.categoryIds
         ? params.categoryIds
             .split(",")
@@ -163,13 +150,16 @@ export async function listarProdutos(
     },
   });
 
-  const normalizados = data.map(normalizarProduto);
-  const filtrados = filtrarPorEstoque(normalizados, params.stock);
-  const ordenados = [...filtrados].sort((a, b) =>
-    a.nome.localeCompare(b.nome, "pt-BR"),
-  );
+  const paginado = paraPaginado(data, normalizarProduto);
 
-  return paginar(ordenados, params.page, params.pageSize);
+  if (params.stock === "out" || params.stock === "ok") {
+    return {
+      ...paginado,
+      items: filtrarPorEstoque(paginado.items, params.stock),
+    };
+  }
+
+  return paginado;
 }
 
 export async function listarLotesProduto(produtoId: number): Promise<LoteProduto[]> {
@@ -304,10 +294,10 @@ export async function listarTiposMovimentacao(): Promise<TipoMovimentacao[]> {
 export async function listarEventosReuniao(): Promise<
   Array<{ id: number; nome: string }>
 > {
-  const { data } = await api.get<Array<{ id: number; nome: string }>>("/eventos", {
-    params: { tipoEvento: "REUNIAO" },
+  const { data } = await api.get<PaginaApi<{ id: number; nome: string }>>("/eventos", {
+    params: { tipoEvento: "REUNIAO", page: 0, size: 100 },
   });
-  return data;
+  return data.itens;
 }
 
 export function normalizarCategoriaApi(categoria: {
