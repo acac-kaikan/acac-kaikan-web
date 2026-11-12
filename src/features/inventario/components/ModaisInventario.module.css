@@ -129,7 +129,7 @@
 
 .infoGrid dt {
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: 1rem;
 }
 
 .infoGrid dd {
@@ -185,7 +185,7 @@
 
 .listMeta {
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: 1rem;
 }
 
 .listNote {
@@ -193,7 +193,7 @@
   border-radius: var(--raio-campo);
   background: var(--branco-suave);
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: 1rem;
 }
 
 .movementTitle {

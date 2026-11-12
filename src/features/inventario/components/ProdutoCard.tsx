@@ -84,7 +84,7 @@ export default function ProdutoCard({
                       onEdit?.(produto);
                     }}
                   >
-                    <Icone name="edit" size={16} />
+                    <Icone name="edit" size={24} />
                     Editar produto
                   </button>
                   <button
@@ -96,7 +96,7 @@ export default function ProdutoCard({
                       onDelete?.(produto);
                     }}
                   >
-                    <Icone name="trash" size={16} />
+                    <Icone name="trash" size={24} />
                     Excluir produto
                   </button>
                 </div>

@@ -13,7 +13,7 @@
 .modal {
   display: flex;
   flex-direction: column;
-  width: min(100%, 640px);
+  width: 100%;
   max-height: calc(100vh - 48px);
   border: 1px solid var(--borda);
   border-radius: var(--raio-modal);

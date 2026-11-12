@@ -58,7 +58,7 @@
 
 .dates dt {
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: var(--texto-auxiliar);
 }
 
 .dates dd {

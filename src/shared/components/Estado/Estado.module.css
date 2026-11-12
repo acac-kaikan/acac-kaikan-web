@@ -13,10 +13,6 @@
   text-align: center;
 }
 
-.state p {
-  max-width: 480px;
-}
-
 .spinner {
   width: 28px;
   height: 28px;

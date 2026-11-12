@@ -39,7 +39,7 @@
 
 .notesLabel {
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -132,7 +132,7 @@
   display: block;
   margin-top: var(--espaco-4);
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: 1rem;
 }
 
 .chart {
@@ -161,7 +161,7 @@
 }
 
 .chartValue {
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -183,7 +183,7 @@
 
 .chartLabel {
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: 1rem;
 }
 
 .chartLegend {
@@ -200,7 +200,7 @@
 .produced {
   margin-left: var(--espaco-4);
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: 1rem;
 }
 
 .positive {
@@ -260,7 +260,7 @@
 
 .costList small {
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: 1rem;
 }
 
 .costList li > span:last-child {

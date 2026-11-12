@@ -12,7 +12,7 @@
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 450px;
   gap: var(--espaco-24);
   align-items: start;
 }
@@ -82,7 +82,7 @@
 
 .rowDate {
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: 1rem;
   text-align: right;
 }
 

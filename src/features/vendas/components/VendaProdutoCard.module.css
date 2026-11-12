@@ -40,7 +40,7 @@
 }
 
 .priceRow strong {
-  font-size: 1.125rem;
+  font-size: var(--texto-corpo);
   font-weight: 700;
 }
 

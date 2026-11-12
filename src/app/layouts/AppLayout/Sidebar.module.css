@@ -39,7 +39,7 @@
 .nav ul {
   display: flex;
   flex-direction: column;
-  gap: var(--espaco-4);
+  gap: var(--espaco-8);
 }
 
 .link {
@@ -47,7 +47,7 @@
   align-items: center;
   gap: var(--espaco-12);
   min-height: 48px;
-  padding: 0 var(--espaco-12);
+  padding: var(--espaco-8) var(--espaco-12);
   border-radius: var(--raio-campo);
   color: var(--texto);
   font-size: var(--texto-corpo);

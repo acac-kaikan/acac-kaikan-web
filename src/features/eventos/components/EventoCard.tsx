@@ -45,7 +45,7 @@ export default function EventoCard({
         </div>
         <Icone
           name={event.tipoEvento === "REUNIAO" ? "users" : "ticket"}
-          size={24}
+          size={32}
           className={styles.icon}
         />
       </div>

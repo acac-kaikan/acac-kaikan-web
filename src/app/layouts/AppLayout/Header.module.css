@@ -6,7 +6,6 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--espaco-16);
-  min-height: var(--altura-topbar);
   padding: var(--espaco-16) var(--espaco-32);
   border-bottom: 1px solid var(--borda);
   background: rgba(255, 253, 248, 0.96);
@@ -22,7 +21,7 @@
 
 .title {
   overflow: hidden;
-  font-size: 1.5rem;
+  font-size: var(--texto-subtitulo);
   font-weight: 700;
   line-height: 1.2;
   text-overflow: ellipsis;

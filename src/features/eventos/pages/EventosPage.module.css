@@ -12,7 +12,7 @@
 }
 
 .sectionTitle {
-  font-size: 1.25rem;
+  font-size: var(--texto-corpo);
   font-weight: 700;
 }
 
