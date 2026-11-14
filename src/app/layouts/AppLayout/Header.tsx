@@ -6,6 +6,7 @@ import styles from "./Header.module.css";
 
 const TITLES = [
   { pattern: /^\/inicio/, title: "Início" },
+  { pattern: /^\/associados/, title: "Associados" },
   { pattern: /^\/estoque/, title: "Estoque" },
   { pattern: /^\/doacoes/, title: "Doações" },
   { pattern: /^\/eventos/, title: "Eventos" },

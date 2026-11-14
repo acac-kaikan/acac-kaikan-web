@@ -6,6 +6,7 @@ import styles from "./Sidebar.module.css";
 
 const NAV_ITEMS = [
   { to: "/inicio", label: "Início", icon: "home", end: true },
+  { to: "/associados", label: "Associados", icon: "users" },
   { to: "/estoque", label: "Estoque", icon: "box" },
   { to: "/eventos", label: "Eventos", icon: "ticket" },
   { to: "/doacoes", label: "Doações", icon: "gift" },

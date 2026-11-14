@@ -14,6 +14,7 @@ import {
 import { HomePage } from "@/features/home";
 import { InventarioPage, LoteMovimentacoesPage } from "@/features/inventario";
 import { DoacoesPage } from "@/features/doacoes";
+import { AssociadosPage } from "@/features/associados";
 import {
   EventoCardapioPage,
   EventoDetalhesPage,
@@ -45,6 +46,7 @@ export default function AppRoutes() {
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="/inicio" replace />} />
           <Route path="/inicio" element={<HomePage />} />
+          <Route path="/associados" element={<AssociadosPage />} />
           <Route path="/estoque" element={<InventarioPage />} />
           <Route
             path="/estoque/:productId/lotes/:lotId/movimentacoes"
