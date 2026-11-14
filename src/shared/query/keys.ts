@@ -6,6 +6,8 @@ export const queryKeys = {
   caixa: ["caixa"],
   fiados: ["fiados"],
   doacoes: ["doacoes"],
+  associados: ["associados"],
+  anuidades: ["anuidades"],
 } as const;
 
 export function comporChave(
