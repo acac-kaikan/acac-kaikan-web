@@ -12,7 +12,6 @@ export {
 } from "./hooks/useVendas";
 export type {
   CriarVendaPayload,
-  ItemVenda,
   ItemVendaPayload,
   ParametrosVendas,
   ParametrosVendasEvento,

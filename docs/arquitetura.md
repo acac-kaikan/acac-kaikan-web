@@ -134,5 +134,11 @@ npm test && npm run typecheck && npm run lint && npm run lint:boundaries && npm 
 - `CategoriasModal` é um widget conectado de `inventario`, consumido por
   `eventos` via barril público.
 - Tokens de autenticação são ligados ao cliente HTTP por `definirToken`.
+- O cliente expõe `definirRenovadorDeToken`; em `401` de uma rota protegida ele
+  renova o access token e repete a requisição original uma única vez. A política
+  de sessão, a persistência e a rotação do refresh token ficam em
+  `features/auth`; `shared` não conhece a chave de armazenamento.
+- Uma única renovação atende aos `401`s simultâneos (single-flight), e as rotas
+  `/auth/*` nunca disparam renovação.
 - O modo demo é selecionável no cliente compartilhado e mantém os mesmos dados e
-  endpoints.
+  endpoints, incluindo login, refresh e logout.

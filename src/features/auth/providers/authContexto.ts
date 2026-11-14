@@ -4,6 +4,7 @@ import type { Credenciais, Sessao, Usuario } from "../models";
 export interface AutenticacaoContextoValor {
   usuario: Usuario | null;
   estaAutenticado: boolean;
+  sessaoExpirada: boolean;
   entrar: (credenciais: Credenciais) => Promise<Sessao>;
   sair: () => void;
 }

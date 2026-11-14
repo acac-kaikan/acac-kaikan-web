@@ -18,7 +18,12 @@ export default function LoginPage() {
   const { entrar } = useAutenticacao();
   const navigate = useNavigate();
   const location = useLocation();
-  const [serverError, setServerError] = useState("");
+  const estado = location.state as
+    | { from?: { pathname?: string }; sessaoExpirada?: boolean }
+    | null;
+  const [serverError, setServerError] = useState(
+    estado?.sessaoExpirada ? "Sua sessão expirou. Entre novamente." : "",
+  );
   const {
     register,
     handleSubmit,
@@ -29,9 +34,7 @@ export default function LoginPage() {
     setServerError("");
     try {
       await entrar(values);
-      const destination =
-        (location.state as { from?: { pathname?: string } } | null)?.from
-          ?.pathname || "/inicio";
+      const destination = estado?.from?.pathname || "/inicio";
       navigate(destination, { replace: true });
     } catch (error) {
       setServerError(mensagemErro(error, "Não foi possível entrar."));
