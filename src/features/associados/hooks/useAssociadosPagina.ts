@@ -3,6 +3,7 @@ import { useConfiguracoesAnuidadeQuery } from "./useAnuidades";
 import { useAssociadosQuery } from "./useAssociados";
 import type {
   Associado,
+  ConfiguracaoAnuidade,
   ParametrosAssociados,
   StatusAnuidade,
   TipoAssociado,
@@ -11,6 +12,12 @@ import type {
 type EstadoModalAssociado =
   | { modo: "criar" }
   | { modo: "editar"; associado: Associado }
+  | null;
+
+type FluxoAnuidades =
+  | { tela: "lista" }
+  | { tela: "criar" }
+  | { tela: "editar"; configuracao: ConfiguracaoAnuidade }
   | null;
 
 function idadeNumerica(valor: string): number | undefined {
@@ -24,15 +31,17 @@ export function useAssociadosPagina() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [anoEscolhidoState, setAnoEscolhidoState] = useState<number | null>(
-    null,
-  );
+  const [anoEscolhidoState, setAnoEscolhidoState] = useState<
+    number | undefined
+  >(undefined);
   const [tipoState, setTipoState] = useState<TipoAssociado>();
   const [statusState, setStatusState] = useState<StatusAnuidade>();
   const [idadeMinState, setIdadeMinState] = useState("");
   const [idadeMaxState, setIdadeMaxState] = useState("");
   const [modalAssociado, setModalAssociado] =
     useState<EstadoModalAssociado>(null);
+  const [fluxoAnuidades, setFluxoAnuidades] =
+    useState<FluxoAnuidades>(null);
 
   const configuracoesQuery = useConfiguracoesAnuidadeQuery();
   const ano = anoEscolhidoState ?? configuracoesQuery.data?.[0]?.ano;
@@ -69,7 +78,7 @@ export function useAssociadosPagina() {
   }));
   const quantidadeFiltrosAtivos = [
     Boolean(search),
-    anoEscolhidoState !== null,
+    anoEscolhidoState !== undefined,
     tipoState !== undefined,
     statusState !== undefined,
     idadeNumerica(idadeMinState) !== undefined,
@@ -82,7 +91,7 @@ export function useAssociadosPagina() {
   }
 
   function clearFilters() {
-    setAnoEscolhidoState(null);
+    setAnoEscolhidoState(undefined);
     setTipoState(undefined);
     setStatusState(undefined);
     setIdadeMinState("");
@@ -96,7 +105,7 @@ export function useAssociadosPagina() {
     setSearch("");
   }
 
-  function setAnoEscolhido(anoEscolhido: number | null) {
+  function setAnoEscolhido(anoEscolhido: number | undefined) {
     setAnoEscolhidoState(anoEscolhido);
     setPage(1);
   }
@@ -133,6 +142,36 @@ export function useAssociadosPagina() {
     setModalAssociado(null);
   }
 
+  function abrirAnuidades() {
+    setFluxoAnuidades({ tela: "lista" });
+  }
+
+  function criarConfiguracao() {
+    setFluxoAnuidades({ tela: "criar" });
+  }
+
+  function editarConfiguracao(configuracao: ConfiguracaoAnuidade) {
+    setFluxoAnuidades({ tela: "editar", configuracao });
+  }
+
+  function voltarParaListaAnuidades() {
+    setFluxoAnuidades({ tela: "lista" });
+  }
+
+  function fecharAnuidades() {
+    setFluxoAnuidades(null);
+  }
+
+  function configuracaoCriada(configuracao: ConfiguracaoAnuidade) {
+    setAnoEscolhido(configuracao.ano);
+  }
+
+  function configuracaoExcluida(anoExcluido: number) {
+    if (anoEscolhidoState === anoExcluido) {
+      setAnoEscolhido(undefined);
+    }
+  }
+
   return {
     searchDraft,
     setSearchDraft,
@@ -159,6 +198,14 @@ export function useAssociadosPagina() {
     abrirCriar,
     abrirEditar,
     fecharModal,
+    fluxoAnuidades,
+    abrirAnuidades,
+    criarConfiguracao,
+    editarConfiguracao,
+    voltarParaListaAnuidades,
+    fecharAnuidades,
+    configuracaoCriada,
+    configuracaoExcluida,
     runSearch,
     clearFilters,
     clearAll,

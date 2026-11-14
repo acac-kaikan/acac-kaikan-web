@@ -21,6 +21,10 @@
   color: var(--texto);
 }
 
+.contactCell {
+  white-space: nowrap;
+}
+
 .associateCell {
   display: flex;
   align-items: center;

@@ -179,38 +179,40 @@ export default function AssociadoModal({
               Boolean(value.trim()) || "Informe o nome completo.",
           })}
         />
-        <Entrada
-          id="associado-contato"
-          label="Número de contato"
-          type="tel"
-          placeholder="(00) 00000-0000"
-          required
-          error={errors.numeroContato?.message}
-          {...register("numeroContato", {
-            required: "Informe o número de contato.",
-            validate: (value) => {
-              const digitos = value.replace(/\D/g, "").length;
-              return (
-                digitos === 10 ||
-                digitos === 11 ||
-                "Informe um número de contato válido."
-              );
-            },
-          })}
-        />
-        <Entrada
-          id="associado-data-nascimento"
-          label="Data de nascimento"
-          type="date"
-          max={hoje}
-          required
-          error={errors.dataNascimento?.message}
-          {...register("dataNascimento", {
-            required: "Informe a data de nascimento.",
-            validate: (value) =>
-              value <= hoje || "A data de nascimento não pode ser futura.",
-          })}
-        />
+        <div className={styles.twoColumns}>
+          <Entrada
+            id="associado-contato"
+            label="Número de contato"
+            type="tel"
+            placeholder="(00) 00000-0000"
+            required
+            error={errors.numeroContato?.message}
+            {...register("numeroContato", {
+              required: "Informe o número de contato.",
+              validate: (value) => {
+                const digitos = value.replace(/\D/g, "").length;
+                return (
+                  digitos === 10 ||
+                  digitos === 11 ||
+                  "Informe um número de contato válido."
+                );
+              },
+            })}
+          />
+          <Entrada
+            id="associado-data-nascimento"
+            label="Data de nascimento"
+            type="date"
+            max={hoje}
+            required
+            error={errors.dataNascimento?.message}
+            {...register("dataNascimento", {
+              required: "Informe a data de nascimento.",
+              validate: (value) =>
+                value <= hoje || "A data de nascimento não pode ser futura.",
+            })}
+          />
+        </div>
         <Controller
           name="tipo"
           control={control}

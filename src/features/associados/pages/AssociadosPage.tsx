@@ -24,6 +24,8 @@ import type { StatusAnuidade, TipoAssociado } from "../models";
 import { calcularIdade, formatarDataNascimento } from "../utils/idade";
 import { useAssociadosPagina } from "../hooks/useAssociadosPagina";
 import AssociadoModal from "../components/AssociadoModal";
+import AnuidadesModal from "../components/AnuidadesModal";
+import ConfiguracaoAnuidadeModal from "../components/ConfiguracaoAnuidadeModal";
 import styles from "./AssociadosPage.module.css";
 
 const OPCOES_TIPO = [
@@ -75,6 +77,14 @@ export default function AssociadosPage() {
     abrirCriar,
     abrirEditar,
     fecharModal,
+    fluxoAnuidades,
+    abrirAnuidades,
+    criarConfiguracao,
+    editarConfiguracao,
+    voltarParaListaAnuidades,
+    fecharAnuidades,
+    configuracaoCriada,
+    configuracaoExcluida,
     runSearch,
     clearFilters,
     clearAll,
@@ -86,7 +96,7 @@ export default function AssociadosPage() {
   function alterarAno(valor: string) {
     const anoSelecionado = Number(valor);
     setAnoEscolhido(
-      valor && Number.isInteger(anoSelecionado) ? anoSelecionado : null,
+      valor && Number.isInteger(anoSelecionado) ? anoSelecionado : undefined,
     );
   }
 
@@ -111,9 +121,18 @@ export default function AssociadosPage() {
       <PageHeader
         subtitle="Cadastre associados e acompanhe o pagamento das anuidades"
         actions={
-          <Botao iconLeft="plus" onClick={abrirCriar}>
-            Registrar associado
-          </Botao>
+          <>
+            <Botao
+              variant="secondary"
+              iconLeft="calendar"
+              onClick={abrirAnuidades}
+            >
+              Ver anuidades
+            </Botao>
+            <Botao iconLeft="plus" onClick={abrirCriar}>
+              Registrar associado
+            </Botao>
+          </>
         }
       />
 
@@ -232,7 +251,9 @@ export default function AssociadosPage() {
                             </span>
                           </div>
                         </Celula>
-                        <Celula>{associado.numeroContato}</Celula>
+                        <Celula className={styles.contactCell}>
+                          {associado.numeroContato}
+                        </Celula>
                         <Celula>
                           <span>{calcularIdade(associado.dataNascimento)} anos</span>
                           <span className={styles.secondary}>
@@ -324,6 +345,26 @@ export default function AssociadosPage() {
               : undefined
           }
           onClose={fecharModal}
+        />
+      ) : null}
+      {fluxoAnuidades?.tela === "lista" ? (
+        <AnuidadesModal
+          onClose={fecharAnuidades}
+          onCriar={criarConfiguracao}
+          onEditar={editarConfiguracao}
+          onConfiguracaoExcluida={configuracaoExcluida}
+        />
+      ) : null}
+      {fluxoAnuidades?.tela === "criar" ? (
+        <ConfiguracaoAnuidadeModal
+          onClose={voltarParaListaAnuidades}
+          onCreated={configuracaoCriada}
+        />
+      ) : null}
+      {fluxoAnuidades?.tela === "editar" ? (
+        <ConfiguracaoAnuidadeModal
+          configuracao={fluxoAnuidades.configuracao}
+          onClose={voltarParaListaAnuidades}
         />
       ) : null}
     </div>

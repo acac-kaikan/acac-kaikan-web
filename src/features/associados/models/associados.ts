@@ -47,3 +47,8 @@ export interface ConfiguracaoAnuidade {
   ano: number;
   valor: number;
 }
+
+export interface SalvarConfiguracaoAnuidadePayload {
+  ano: number;
+  valor: number;
+}

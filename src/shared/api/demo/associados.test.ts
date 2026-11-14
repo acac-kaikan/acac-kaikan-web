@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { demoAdapter } from "./adaptador";
-import { filtrarAssociados, montarPaginaAssociados } from "./associados";
+import {
+  excluirConfiguracaoDoBanco,
+  filtrarAssociados,
+  montarPaginaAssociados,
+} from "./associados";
 import { criarSeedAssociados } from "./dadosAssociados";
 
 describe("demo associados", () => {
@@ -217,5 +221,138 @@ describe("demo associados", () => {
       totalPago: 0,
       status: "PENDENTE",
     });
+  });
+
+  it("cria configuração e anuidades pendentes somente para titulares", async () => {
+    const resposta = await demoAdapter({
+      url: "/anuidades/configuracoes",
+      method: "post",
+      data: JSON.stringify({ ano: 2027, valor: 175 }),
+    });
+    const pagina = await demoAdapter({
+      url: "/associados",
+      method: "get",
+      params: { ano: 2027, size: 100 },
+    });
+    const titulares = pagina.data.itens.filter(
+      (associado: { tipo: string }) => associado.tipo === "TITULAR",
+    );
+    const dependentes = pagina.data.itens.filter(
+      (associado: { tipo: string }) => associado.tipo === "DEPENDENTE",
+    );
+
+    expect(resposta.status).toBe(201);
+    expect(resposta.data).toMatchObject({ ano: 2027, valor: 175 });
+    expect(titulares.length).toBeGreaterThan(0);
+    expect(
+      titulares.every(
+        (associado: { anuidade: { valor: number; totalPago: number; status: string } }) =>
+          associado.anuidade.valor === 175 &&
+          associado.anuidade.totalPago === 0 &&
+          associado.anuidade.status === "PENDENTE",
+      ),
+    ).toBe(true);
+    expect(dependentes.every((associado: { anuidade: unknown }) => associado.anuidade === null))
+      .toBe(true);
+  });
+
+  it("rejeita configuração com ano duplicado", async () => {
+    await expect(
+      demoAdapter({
+        url: "/anuidades/configuracoes",
+        method: "post",
+        data: JSON.stringify({ ano: 2027, valor: 200 }),
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        status: 409,
+        data: { mensagem: "Já existe uma anuidade configurada para este ano." },
+      },
+    });
+  });
+
+  it("edita a configuração sem alterar anuidades já geradas", async () => {
+    const resposta = await demoAdapter({
+      url: "/anuidades/configuracoes/3",
+      method: "put",
+      data: JSON.stringify({ ano: 2028, valor: 210 }),
+    });
+    const paginaAnoAnterior = await demoAdapter({
+      url: "/associados",
+      method: "get",
+      params: { ano: 2027, size: 100 },
+    });
+    const paginaAnoNovo = await demoAdapter({
+      url: "/associados",
+      method: "get",
+      params: { ano: 2028, size: 100 },
+    });
+
+    expect(resposta.data).toMatchObject({ id: 3, ano: 2028, valor: 210 });
+    expect(
+      paginaAnoAnterior.data.itens.find(
+        (associado: { id: number }) => associado.id === 1,
+      ).anuidade,
+    ).toMatchObject({ valor: 175, status: "PENDENTE" });
+    expect(
+      paginaAnoNovo.data.itens.every(
+        (associado: { anuidade: unknown }) => associado.anuidade === null,
+      ),
+    ).toBe(true);
+  });
+
+  it("rejeita ano inválido na configuração", async () => {
+    await expect(
+      demoAdapter({
+        url: "/anuidades/configuracoes",
+        method: "post",
+        data: JSON.stringify({ ano: 1999, valor: 100 }),
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        status: 400,
+        data: { mensagem: "Informe um ano e um valor válidos." },
+      },
+    });
+  });
+
+  it("exclui cobranças e pagamentos junto com a configuração", async () => {
+    const banco = criarSeedAssociados();
+    const idsAnuidades = new Set(
+      banco.anuidades
+        .filter((anuidade) => anuidade.ano === 2025)
+        .map((anuidade) => anuidade.id),
+    );
+    expect(
+      banco.pagamentos.some((pagamento) =>
+        idsAnuidades.has(pagamento.anuidadeId),
+      ),
+    ).toBe(true);
+
+    excluirConfiguracaoDoBanco(banco, 1);
+    expect(banco.anuidades.some((anuidade) => anuidade.ano === 2025)).toBe(
+      false,
+    );
+    expect(
+      banco.pagamentos.some((pagamento) =>
+        idsAnuidades.has(pagamento.anuidadeId),
+      ),
+    ).toBe(false);
+
+    const resposta = await demoAdapter({
+      url: "/anuidades/configuracoes/1",
+      method: "delete",
+    });
+    const pagina = await demoAdapter({
+      url: "/associados",
+      method: "get",
+      params: { ano: 2025, size: 100 },
+    });
+    expect(resposta.status).toBe(200);
+    expect(
+      pagina.data.itens.every(
+        (associado: { anuidade: unknown }) => associado.anuidade === null,
+      ),
+    ).toBe(true);
   });
 });

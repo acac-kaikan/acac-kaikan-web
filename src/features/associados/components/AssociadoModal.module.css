@@ -4,6 +4,13 @@
   gap: var(--espaco-16);
 }
 
+.twoColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espaco-16);
+  align-items: start;
+}
+
 .serverError {
   display: flex;
   align-items: flex-start;
@@ -19,4 +26,10 @@
 .serverError svg {
   flex-shrink: 0;
   margin-top: 2px;
+}
+
+@media (max-width: 600px) {
+  .twoColumns {
+    grid-template-columns: 1fr;
+  }
 }

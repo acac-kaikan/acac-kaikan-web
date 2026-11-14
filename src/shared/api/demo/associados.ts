@@ -3,6 +3,7 @@ import { lerJSON, salvarJSON } from "@/shared/lib/armazenamentoLocal";
 import {
   criarSeedAssociados,
   type AssociadoDemo,
+  type ConfiguracaoAnuidadeDemo,
   type DadosAssociadosDemo,
   type StatusAnuidadeDemo,
   type TipoAssociadoDemo,
@@ -127,6 +128,125 @@ function maiorAnoConfigurado(
 ): number | undefined {
   if (!db.configuracoes.length) return undefined;
   return Math.max(...db.configuracoes.map((configuracao) => configuracao.ano));
+}
+
+function salvarConfiguracaoAnuidade(
+  db: DadosAssociadosDemo,
+  corpo: unknown,
+  id?: number,
+): ConfiguracaoAnuidadeDemo {
+  const atual =
+    id === undefined
+      ? undefined
+      : db.configuracoes.find((configuracao) => configuracao.id === id);
+  if (id !== undefined && !atual) {
+    throw new FalhaAssociadoDemo(
+      404,
+      "CONFIGURACAO_NAO_ENCONTRADA",
+      "Configuração de anuidade não encontrada.",
+    );
+  }
+  if (!corpo || typeof corpo !== "object" || Array.isArray(corpo)) {
+    throw new FalhaAssociadoDemo(
+      400,
+      "CONFIGURACAO_INVALIDA",
+      "Informe um ano e um valor válidos.",
+    );
+  }
+
+  const payload = corpo as Record<string, unknown>;
+  const ano = payload.ano;
+  const valor = payload.valor;
+  if (
+    typeof ano !== "number" ||
+    !Number.isInteger(ano) ||
+    ano < 2000 ||
+    ano > 2100 ||
+    typeof valor !== "number" ||
+    !Number.isFinite(valor) ||
+    valor < 0
+  ) {
+    throw new FalhaAssociadoDemo(
+      400,
+      "CONFIGURACAO_INVALIDA",
+      "Informe um ano e um valor válidos.",
+    );
+  }
+  if (
+    db.configuracoes.some(
+      (configuracao) => configuracao.ano === ano && configuracao.id !== id,
+    )
+  ) {
+    throw new FalhaAssociadoDemo(
+      409,
+      "ANO_ANUIDADE_DUPLICADO",
+      "Já existe uma anuidade configurada para este ano.",
+    );
+  }
+
+  const configuracao: ConfiguracaoAnuidadeDemo = {
+    id: atual?.id ?? Math.max(0, ...db.configuracoes.map((item) => item.id)) + 1,
+    ano,
+    valor,
+  };
+  if (atual) {
+    const indice = db.configuracoes.findIndex((item) => item.id === id);
+    db.configuracoes[indice] = configuracao;
+    return configuracao;
+  }
+
+  db.configuracoes.push(configuracao);
+  const titulares = db.associados.filter(
+    (associado) => associado.tipo === "TITULAR",
+  );
+  for (const titular of titulares) {
+    if (
+      db.anuidades.some(
+        (anuidade) =>
+          anuidade.associadoId === titular.id && anuidade.ano === ano,
+      )
+    ) {
+      continue;
+    }
+    db.anuidades.push({
+      id: Math.max(0, ...db.anuidades.map((item) => item.id)) + 1,
+      associadoId: titular.id,
+      ano,
+      valor,
+      status: "PENDENTE",
+    });
+  }
+  return configuracao;
+}
+
+export function excluirConfiguracaoDoBanco(
+  db: DadosAssociadosDemo,
+  id: number,
+): ConfiguracaoAnuidadeDemo {
+  const indice = db.configuracoes.findIndex(
+    (configuracao) => configuracao.id === id,
+  );
+  if (indice < 0) {
+    throw new FalhaAssociadoDemo(
+      404,
+      "CONFIGURACAO_NAO_ENCONTRADA",
+      "Configuração de anuidade não encontrada.",
+    );
+  }
+
+  const [configuracao] = db.configuracoes.splice(indice, 1);
+  const idsAnuidades = new Set(
+    db.anuidades
+      .filter((anuidade) => anuidade.ano === configuracao.ano)
+      .map((anuidade) => anuidade.id),
+  );
+  db.anuidades = db.anuidades.filter(
+    (anuidade) => anuidade.ano !== configuracao.ano,
+  );
+  db.pagamentos = db.pagamentos.filter(
+    (pagamento) => !idsAnuidades.has(pagamento.anuidadeId),
+  );
+  return configuracao;
 }
 
 function lerCorpo(config: InternalAxiosRequestConfig): unknown {
@@ -442,12 +562,21 @@ export function rotearAssociadosDemo({
   const rotaAssociados = method === "get" && path === "/associados";
   const rotaConfiguracoes =
     method === "get" && path === "/anuidades/configuracoes";
+  const rotaCriarConfiguracao =
+    method === "post" && path === "/anuidades/configuracoes";
+  const rotaAtualizarConfiguracao =
+    method === "put" && /^\/anuidades\/configuracoes\/\d+$/.test(path);
+  const rotaExcluirConfiguracao =
+    method === "delete" && /^\/anuidades\/configuracoes\/\d+$/.test(path);
   const rotaCriarAssociado = method === "post" && path === "/associados";
   const rotaAtualizarAssociado = method === "put" && /^\/associados\/\d+$/.test(path);
 
   if (
     !rotaAssociados &&
     !rotaConfiguracoes &&
+    !rotaCriarConfiguracao &&
+    !rotaAtualizarConfiguracao &&
+    !rotaExcluirConfiguracao &&
     !rotaCriarAssociado &&
     !rotaAtualizarAssociado
   ) {
@@ -479,6 +608,36 @@ export function rotearAssociadosDemo({
           }),
           status: 200,
         };
+      }
+
+      if (rotaCriarConfiguracao || rotaAtualizarConfiguracao) {
+        const idMatch = path.match(/^\/anuidades\/configuracoes\/(\d+)$/);
+        const id = idMatch ? Number(idMatch[1]) : undefined;
+        const configuracao = salvarConfiguracaoAnuidade(
+          db,
+          lerCorpo(config),
+          id,
+        );
+        salvarJSON(STORAGE_KEY, db);
+        return {
+          data: configuracao,
+          status: rotaCriarConfiguracao ? 201 : 200,
+        };
+      }
+
+      if (rotaExcluirConfiguracao) {
+        const idMatch = path.match(/^\/anuidades\/configuracoes\/(\d+)$/);
+        const id = idMatch ? Number(idMatch[1]) : undefined;
+        if (id === undefined) {
+          throw new FalhaAssociadoDemo(
+            404,
+            "CONFIGURACAO_NAO_ENCONTRADA",
+            "Configuração de anuidade não encontrada.",
+          );
+        }
+        excluirConfiguracaoDoBanco(db, id);
+        salvarJSON(STORAGE_KEY, db);
+        return { data: { ok: true }, status: 200 };
       }
 
       const idMatch = path.match(/^\/associados\/(\d+)$/);

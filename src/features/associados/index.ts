@@ -4,8 +4,11 @@ export {
   useAssociadosQuery,
   useTitularesQuery,
 } from "./hooks/useAssociados";
-export { useConfiguracoesAnuidadeQuery } from "./hooks/useAnuidades";
 export { useAssociadosPagina } from "./hooks/useAssociadosPagina";
+export {
+  useConfiguracaoAnuidadeMutations,
+  useConfiguracoesAnuidadeQuery,
+} from "./hooks/useAnuidades";
 export type {
   AnuidadeAssociado,
   Associado,
@@ -13,6 +16,7 @@ export type {
   ParametrosAssociados,
   RespostaAssociados,
   SalvarAssociadoPayload,
+  SalvarConfiguracaoAnuidadePayload,
   StatusAnuidade,
   TipoAssociado,
 } from "./models";
