@@ -1,5 +1,6 @@
 import { AxiosError } from "axios";
 import { getDb, persistDb } from "./store";
+import { rotearAssociadosDemo } from "./associados";
 import { criarId, agoraISO } from "@/shared/lib/armazenamentoLocal";
 
 function ok(config: any, data: any, status = 200) {
@@ -228,6 +229,13 @@ async function route(config: any) {
   const db = getDb();
   const { path, params } = parseUrl(config);
   const method = String(config.method || "get").toLowerCase();
+  const respostaAssociados = rotearAssociadosDemo({
+    config,
+    path,
+    params,
+    method,
+  });
+  if (respostaAssociados) return respostaAssociados;
   const body = parseBody(config);
   const now = agoraISO();
 
