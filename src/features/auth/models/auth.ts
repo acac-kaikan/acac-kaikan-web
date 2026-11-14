@@ -10,6 +10,8 @@ export interface Sessao {
   usuario: Usuario;
 }
 
+export type TokensRenovados = Pick<Sessao, "accessToken" | "refreshToken">;
+
 export interface Credenciais {
   email: string;
   senha: string;

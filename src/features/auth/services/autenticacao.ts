@@ -1,8 +1,22 @@
 import api from "@/shared/api/cliente";
-import type { Credenciais, RedefinirSenhaPayload, Sessao } from "../models";
+import type {
+  Credenciais,
+  RedefinirSenhaPayload,
+  Sessao,
+  TokensRenovados,
+} from "../models";
 
 export async function entrar(credenciais: Credenciais): Promise<Sessao> {
   const { data } = await api.post<Sessao>("/auth/login", credenciais);
+  return data;
+}
+
+export async function renovarTokens(
+  refreshToken: string,
+): Promise<TokensRenovados> {
+  const { data } = await api.post<TokensRenovados>("/auth/refresh", {
+    refreshToken,
+  });
   return data;
 }
 

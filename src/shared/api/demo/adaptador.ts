@@ -199,15 +199,83 @@ function buildEvent(db: any, event: any, includeRelations = false) {
   };
 }
 
-function takenLogin(email: any) {
+const DEMO_ACCESS_TOKEN_TTL_MS = 2 * 60 * 1000;
+const PREFIXO_ACCESS_TOKEN = "demo-access-";
+const PREFIXO_REFRESH_TOKEN = "demo-refresh-";
+
+let sequenciaTokens = 0;
+
+const PERMISSOES_DEMO = [
+  "EVENTOS_MENU",
+  "ESTOQUE_MENU",
+  "DOACOES_MENU",
+  "VENDAS_MENU",
+  "CAIXA_MENU",
+  "RELATORIOS_MENU",
+  "DASHBOARD_MENU",
+  "EVENTOS_LEITURA",
+  "PRODUTOS_LEITURA",
+  "CARDAPIO_EVENTO_LEITURA",
+];
+
+function codificar(valor: string) {
+  return btoa(encodeURIComponent(valor));
+}
+
+function decodificar(valor: string): string | null {
+  try {
+    return decodeURIComponent(atob(valor));
+  } catch {
+    return null;
+  }
+}
+
+function emitirTokensDemo(email: string) {
+  const nonce = ++sequenciaTokens;
   return {
-    token: `demo-${btoa(email).replace(/=+$/, "")}`,
-    user: {
-      id: "usuario-demo",
-      name: "Administrador",
-      email,
-      initials: "AD",
-      accountLabel: "Conta compartilhada",
+    accessToken: `${PREFIXO_ACCESS_TOKEN}${codificar(email)}-${Date.now() + DEMO_ACCESS_TOKEN_TTL_MS}-${nonce}`,
+    refreshToken: `${PREFIXO_REFRESH_TOKEN}${codificar(email)}-${nonce}`,
+  };
+}
+
+function lerEmailDoAccessToken(token: string | null): string | null {
+  if (!token?.startsWith(PREFIXO_ACCESS_TOKEN)) return null;
+  const partes = token.slice(PREFIXO_ACCESS_TOKEN.length).split("-");
+  if (partes.length !== 3) return null;
+  const email = decodificar(partes[0]);
+  const expiraEm = Number(partes[1]);
+  if (!email || !Number.isFinite(expiraEm) || Date.now() >= expiraEm) {
+    return null;
+  }
+  return email;
+}
+
+function lerEmailDoRefreshToken(token: unknown): string | null {
+  if (typeof token !== "string" || !token.startsWith(PREFIXO_REFRESH_TOKEN)) {
+    return null;
+  }
+  const partes = token.slice(PREFIXO_REFRESH_TOKEN.length).split("-");
+  if (partes.length !== 2) return null;
+  return decodificar(partes[0]);
+}
+
+function tokenDoCabecalho(config: any): string | null {
+  const bruto =
+    typeof config.headers?.get === "function"
+      ? config.headers.get("Authorization")
+      : config.headers?.Authorization;
+  if (!bruto) return null;
+  const correspondencia = String(bruto).match(/^Bearer\s+(.+)$/i);
+  return correspondencia ? correspondencia[1] : null;
+}
+
+function takenLogin(email: string) {
+  return {
+    ...emitirTokensDemo(email),
+    usuario: {
+      nome: "Administrador",
+      cargo: "ADMINISTRADOR",
+      permissoes: PERMISSOES_DEMO,
     },
   };
 }
@@ -236,10 +304,31 @@ async function route(config: any) {
     if (!body.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
       return fail(config, 400, "Confira o e-mail informado e tente novamente.");
     }
-    if (!body.password) {
+    if (!body.senha) {
       return fail(config, 400, "Informe sua senha para continuar.");
     }
     return ok(config, takenLogin(body.email));
+  }
+
+  if (method === "post" && path === "/auth/refresh") {
+    const email = lerEmailDoRefreshToken(body.refreshToken);
+    if (!email) {
+      return fail(config, 401, "Refresh token inválido ou expirado.");
+    }
+    return ok(config, emitirTokensDemo(email));
+  }
+
+  if (method === "post" && path === "/auth/logout") {
+    if (!lerEmailDoRefreshToken(body.refreshToken)) {
+      return fail(config, 401, "Refresh token inválido ou expirado.");
+    }
+    return ok(config, null, 204);
+  }
+
+  if (!path.startsWith("/auth/")) {
+    if (!lerEmailDoAccessToken(tokenDoCabecalho(config))) {
+      return fail(config, 401, "Sessão expirada. Entre novamente.");
+    }
   }
 
   if (method === "post" && path === "/auth/recover") {

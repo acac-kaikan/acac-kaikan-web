@@ -1,1 +1,1 @@
-export type { Credenciais, RedefinirSenhaPayload, Sessao, Usuario } from "./auth";
+export type { Credenciais, RedefinirSenhaPayload, Sessao, TokensRenovados, Usuario } from "./auth";

@@ -34,7 +34,6 @@ export default function QuitarFiadoModal({
   const { addToast } = useToast();
   const { quitarFiado: settleFiado } = useCaixaMutations();
   const {
-    control,
     handleSubmit,
     watch,
     setValue,

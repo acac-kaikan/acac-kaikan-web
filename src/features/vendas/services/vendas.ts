@@ -1,5 +1,5 @@
 import api from "@/shared/api/cliente";
-import { fimDoDiaISO, inicioDoDiaISO } from "@/features/eventos/utils/datas";
+import { fimDoDiaISO, inicioDoDiaISO } from "@/features/eventos";
 import type {
   CriarVendaPayload,
   ItemVendaPayload,

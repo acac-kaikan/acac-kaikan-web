@@ -19,6 +19,7 @@ export {
   rotuloTipoEvento,
   varianteStatus,
 } from "./utils/statusEvento";
+export { fimDoDiaISO, inicioDoDiaISO } from "./utils/datas";
 export type {
   AdicionarProdutoCardapioPayload,
   AtualizarEventoPayload,
