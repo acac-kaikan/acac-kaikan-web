@@ -23,6 +23,7 @@ import { formatarMoeda, iniciais, pluralizar } from "@/shared/lib/formatacao";
 import type { StatusAnuidade, TipoAssociado } from "../models";
 import { calcularIdade, formatarDataNascimento } from "../utils/idade";
 import { useAssociadosPagina } from "../hooks/useAssociadosPagina";
+import AssociadoModal from "../components/AssociadoModal";
 import styles from "./AssociadosPage.module.css";
 
 const OPCOES_TIPO = [
@@ -70,6 +71,10 @@ export default function AssociadosPage() {
     associadosQuery,
     configuracoesQuery,
     opcoesAno,
+    modalAssociado,
+    abrirCriar,
+    abrirEditar,
+    fecharModal,
     runSearch,
     clearFilters,
     clearAll,
@@ -103,7 +108,14 @@ export default function AssociadosPage() {
 
   return (
     <div className={styles.stack}>
-      <PageHeader subtitle="Cadastre associados e acompanhe o pagamento das anuidades" />
+      <PageHeader
+        subtitle="Cadastre associados e acompanhe o pagamento das anuidades"
+        actions={
+          <Botao iconLeft="plus" onClick={abrirCriar}>
+            Registrar associado
+          </Botao>
+        }
+      />
 
       <BarraPesquisa
         value={searchDraft}
@@ -190,6 +202,7 @@ export default function AssociadosPage() {
                     <CelulaCabecalho>Tipo</CelulaCabecalho>
                     <CelulaCabecalho>Anuidade</CelulaCabecalho>
                     <CelulaCabecalho numeric>Valor / pago</CelulaCabecalho>
+                    <CelulaCabecalho>Ações</CelulaCabecalho>
                   </Linha>
                 </Cabecalho>
                 <Corpo>
@@ -256,6 +269,17 @@ export default function AssociadosPage() {
                             "—"
                           )}
                         </Celula>
+                        <Celula>
+                          <Botao
+                            variant="secondary"
+                            size="compact"
+                            iconLeft="edit"
+                            aria-label={`Editar ${associado.nome}`}
+                            onClick={() => abrirEditar(associado)}
+                          >
+                            Editar
+                          </Botao>
+                        </Celula>
                       </Linha>
                     );
                   })}
@@ -280,7 +304,11 @@ export default function AssociadosPage() {
                   <Botao variant="secondary" onClick={clearAll}>
                     Limpar filtros
                   </Botao>
-                ) : null
+                ) : (
+                  <Botao iconLeft="plus" onClick={abrirCriar}>
+                    Registrar associado
+                  </Botao>
+                )
               }
             />
           )}
@@ -288,6 +316,16 @@ export default function AssociadosPage() {
       ) : (
         <EstadoCarregando message="Carregando associados..." />
       )}
+      {modalAssociado ? (
+        <AssociadoModal
+          associado={
+            modalAssociado.modo === "editar"
+              ? modalAssociado.associado
+              : undefined
+          }
+          onClose={fecharModal}
+        />
+      ) : null}
     </div>
   );
 }

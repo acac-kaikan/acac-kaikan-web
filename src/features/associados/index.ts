@@ -1,5 +1,6 @@
 export { default as AssociadosPage } from "./pages/AssociadosPage";
 export {
+  useAssociadoMutations,
   useAssociadosQuery,
   useTitularesQuery,
 } from "./hooks/useAssociados";
@@ -11,6 +12,7 @@ export type {
   ConfiguracaoAnuidade,
   ParametrosAssociados,
   RespostaAssociados,
+  SalvarAssociadoPayload,
   StatusAnuidade,
   TipoAssociado,
 } from "./models";

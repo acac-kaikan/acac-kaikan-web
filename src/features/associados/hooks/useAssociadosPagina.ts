@@ -2,10 +2,16 @@ import { useMemo, useState } from "react";
 import { useConfiguracoesAnuidadeQuery } from "./useAnuidades";
 import { useAssociadosQuery } from "./useAssociados";
 import type {
+  Associado,
   ParametrosAssociados,
   StatusAnuidade,
   TipoAssociado,
 } from "../models";
+
+type EstadoModalAssociado =
+  | { modo: "criar" }
+  | { modo: "editar"; associado: Associado }
+  | null;
 
 function idadeNumerica(valor: string): number | undefined {
   if (!valor.trim()) return undefined;
@@ -25,6 +31,8 @@ export function useAssociadosPagina() {
   const [statusState, setStatusState] = useState<StatusAnuidade>();
   const [idadeMinState, setIdadeMinState] = useState("");
   const [idadeMaxState, setIdadeMaxState] = useState("");
+  const [modalAssociado, setModalAssociado] =
+    useState<EstadoModalAssociado>(null);
 
   const configuracoesQuery = useConfiguracoesAnuidadeQuery();
   const ano = anoEscolhidoState ?? configuracoesQuery.data?.[0]?.ano;
@@ -113,6 +121,18 @@ export function useAssociadosPagina() {
     setPage(1);
   }
 
+  function abrirCriar() {
+    setModalAssociado({ modo: "criar" });
+  }
+
+  function abrirEditar(associado: Associado) {
+    setModalAssociado({ modo: "editar", associado });
+  }
+
+  function fecharModal() {
+    setModalAssociado(null);
+  }
+
   return {
     searchDraft,
     setSearchDraft,
@@ -135,6 +155,10 @@ export function useAssociadosPagina() {
     associadosQuery,
     configuracoesQuery,
     opcoesAno,
+    modalAssociado,
+    abrirCriar,
+    abrirEditar,
+    fecharModal,
     runSearch,
     clearFilters,
     clearAll,

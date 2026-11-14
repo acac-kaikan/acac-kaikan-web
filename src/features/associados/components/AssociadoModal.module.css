@@ -1,0 +1,22 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-16);
+}
+
+.serverError {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-8);
+  padding: var(--espaco-12);
+  border: 1px solid var(--cor-erro);
+  border-radius: var(--raio-campo);
+  background: var(--erro-suave);
+  color: var(--cor-erro);
+  font-size: var(--texto-auxiliar);
+}
+
+.serverError svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}

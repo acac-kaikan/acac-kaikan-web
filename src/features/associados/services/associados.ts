@@ -5,6 +5,7 @@ import type {
   Associado,
   ParametrosAssociados,
   RespostaAssociados,
+  SalvarAssociadoPayload,
 } from "../models";
 
 interface PaginaApi<T> {
@@ -88,4 +89,22 @@ export async function listarAssociados(
 export async function listarTitulares(): Promise<Associado[]> {
   const resposta = await listarAssociados({ tipo: "TITULAR", pageSize: 100 });
   return resposta.items;
+}
+
+export async function criarAssociado(
+  payload: SalvarAssociadoPayload,
+): Promise<Associado> {
+  const { data } = await api.post<AssociadoApi>("/associados", payload);
+  return paraAssociado(data);
+}
+
+export async function atualizarAssociado(
+  id: number,
+  payload: SalvarAssociadoPayload,
+): Promise<Associado> {
+  const { data } = await api.put<AssociadoApi>(
+    `/associados/${id}`,
+    payload,
+  );
+  return paraAssociado(data);
 }

@@ -32,6 +32,14 @@ export interface ParametrosAssociados extends ParametrosPaginacao {
   idadeMax?: number;
 }
 
+export interface SalvarAssociadoPayload {
+  nome: string;
+  numeroContato: string;
+  dataNascimento: string;
+  tipo: TipoAssociado;
+  titularId?: number | null;
+}
+
 export type RespostaAssociados = Paginado<Associado>;
 
 export interface ConfiguracaoAnuidade {

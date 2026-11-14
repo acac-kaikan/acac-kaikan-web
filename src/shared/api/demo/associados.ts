@@ -40,6 +40,21 @@ interface PaginaAssociadosDemo {
   totalPaginas: number;
 }
 
+class FalhaAssociadoDemo extends Error {
+  readonly status: number;
+  readonly codigo: string;
+
+  constructor(
+    status: number,
+    codigo: string,
+    mensagem: string,
+  ) {
+    super(mensagem);
+    this.status = status;
+    this.codigo = codigo;
+  }
+}
+
 let bancoMemoria: DadosAssociadosDemo | null = null;
 
 function obterBanco(): DadosAssociadosDemo {
@@ -107,6 +122,193 @@ function paraAssociadoDoAno(
   };
 }
 
+function maiorAnoConfigurado(
+  db: DadosAssociadosDemo,
+): number | undefined {
+  if (!db.configuracoes.length) return undefined;
+  return Math.max(...db.configuracoes.map((configuracao) => configuracao.ano));
+}
+
+function lerCorpo(config: InternalAxiosRequestConfig): unknown {
+  if (typeof config.data !== "string") return config.data;
+  try {
+    return JSON.parse(config.data);
+  } catch {
+    throw new FalhaAssociadoDemo(
+      400,
+      "ASSOCIADO_INVALIDO",
+      "Informe os dados do associado.",
+    );
+  }
+}
+
+function salvarAssociado(
+  db: DadosAssociadosDemo,
+  corpo: unknown,
+  id?: number,
+): AssociadoComAnuidadeDemo {
+  const atual =
+    id === undefined ? undefined : db.associados.find((item) => item.id === id);
+  if (id !== undefined && !atual) {
+    throw new FalhaAssociadoDemo(
+      404,
+      "ASSOCIADO_NAO_ENCONTRADO",
+      "Associado não encontrado.",
+    );
+  }
+  if (!corpo || typeof corpo !== "object" || Array.isArray(corpo)) {
+    throw new FalhaAssociadoDemo(
+      400,
+      "ASSOCIADO_INVALIDO",
+      "Informe os dados do associado.",
+    );
+  }
+
+  const payload = corpo as Record<string, unknown>;
+  const nome = typeof payload.nome === "string" ? payload.nome.trim() : "";
+  const numeroContato =
+    typeof payload.numeroContato === "string"
+      ? payload.numeroContato.trim()
+      : "";
+  const dataNascimento =
+    typeof payload.dataNascimento === "string"
+      ? payload.dataNascimento.trim()
+      : "";
+
+  if (!nome) {
+    throw new FalhaAssociadoDemo(
+      400,
+      "NOME_OBRIGATORIO",
+      "Informe o nome completo.",
+    );
+  }
+  if (!numeroContato) {
+    throw new FalhaAssociadoDemo(
+      400,
+      "CONTATO_OBRIGATORIO",
+      "Informe o número de contato.",
+    );
+  }
+  if (!dataNascimento) {
+    throw new FalhaAssociadoDemo(
+      400,
+      "DATA_NASCIMENTO_OBRIGATORIA",
+      "Informe a data de nascimento.",
+    );
+  }
+  if (payload.tipo !== "TITULAR" && payload.tipo !== "DEPENDENTE") {
+    throw new FalhaAssociadoDemo(
+      400,
+      "TIPO_ASSOCIADO_INVALIDO",
+      "Selecione o tipo de associado.",
+    );
+  }
+
+  if (
+    atual?.tipo === "TITULAR" &&
+    payload.tipo === "DEPENDENTE" &&
+    db.associados.some(
+      (associado) =>
+        associado.tipo === "DEPENDENTE" && associado.titularId === atual.id,
+    )
+  ) {
+    throw new FalhaAssociadoDemo(
+      400,
+      "TITULAR_POSSUI_DEPENDENTES",
+      "Este titular possui dependentes. Reatribua-os antes de alterar o tipo.",
+    );
+  }
+
+  let titular: AssociadoDemo | undefined;
+  if (payload.tipo === "DEPENDENTE") {
+    if (
+      typeof payload.titularId !== "number" ||
+      !Number.isInteger(payload.titularId)
+    ) {
+      throw new FalhaAssociadoDemo(
+        400,
+        "TITULAR_INVALIDO",
+        "Selecione o titular responsável.",
+      );
+    }
+    if (payload.titularId === id) {
+      throw new FalhaAssociadoDemo(
+        400,
+        "TITULAR_PROPRIO",
+        "Um associado não pode ser seu próprio titular.",
+      );
+    }
+    titular = db.associados.find(
+      (associado) => associado.id === payload.titularId,
+    );
+    if (!titular || titular.tipo !== "TITULAR") {
+      throw new FalhaAssociadoDemo(
+        400,
+        "TITULAR_INVALIDO",
+        "Selecione o titular responsável.",
+      );
+    }
+  }
+
+  const nomeNormalizado = normalizarBusca(nome);
+  const nomeDuplicado = db.associados.some(
+    (associado) =>
+      associado.id !== id &&
+      normalizarBusca(associado.nome) === nomeNormalizado,
+  );
+  if (nomeDuplicado) {
+    throw new FalhaAssociadoDemo(
+      409,
+      "NOME_ASSOCIADO_DUPLICADO",
+      "Já existe um associado com esse nome.",
+    );
+  }
+
+  const associadoSalvo: AssociadoDemo = {
+    id: atual?.id ?? Math.max(0, ...db.associados.map((item) => item.id)) + 1,
+    nome,
+    numeroContato,
+    dataNascimento,
+    tipo: payload.tipo,
+    titularId: payload.tipo === "DEPENDENTE" ? (titular?.id ?? null) : null,
+    titularNome:
+      payload.tipo === "DEPENDENTE" ? (titular?.nome ?? null) : null,
+  };
+
+  if (atual) {
+    const indice = db.associados.findIndex((associado) => associado.id === id);
+    db.associados[indice] = associadoSalvo;
+    if (associadoSalvo.tipo === "TITULAR") {
+      db.associados.forEach((associado) => {
+        if (
+          associado.tipo === "DEPENDENTE" &&
+          associado.titularId === associadoSalvo.id
+        ) {
+          associado.titularNome = associadoSalvo.nome;
+        }
+      });
+    }
+  } else {
+    db.associados.push(associadoSalvo);
+  }
+
+  const ano = maiorAnoConfigurado(db);
+  if (!atual && associadoSalvo.tipo === "TITULAR" && ano !== undefined) {
+    const configuracao = db.configuracoes.find((item) => item.ano === ano);
+    if (configuracao) {
+      db.anuidades.push({
+        id: Math.max(0, ...db.anuidades.map((item) => item.id)) + 1,
+        associadoId: associadoSalvo.id,
+        ano,
+        valor: configuracao.valor,
+        status: "PENDENTE",
+      });
+    }
+  }
+
+  return paraAssociadoDoAno(associadoSalvo, db, ano);
+}
+
 export function filtrarAssociados(
   db: DadosAssociadosDemo,
   params: ParametrosAssociadosDemo,
@@ -172,11 +374,12 @@ export function montarPaginaAssociados(
 function respostaOk(
   config: InternalAxiosRequestConfig,
   data: unknown,
+  status = 200,
 ): Promise<AxiosResponse> {
   return Promise.resolve({
     data: JSON.parse(JSON.stringify(data)),
-    status: 200,
-    statusText: "OK",
+    status,
+    statusText: status === 201 ? "Created" : "OK",
     headers: {},
     config,
     request: {},
@@ -185,19 +388,19 @@ function respostaOk(
 
 function respostaErro(
   config: InternalAxiosRequestConfig,
-  erro: unknown,
+  status: number,
+  codigo: string,
+  mensagem: string,
 ): Promise<never> {
-  const message =
-    erro instanceof Error ? erro.message : "Erro ao carregar associados.";
   const response: AxiosResponse = {
-    status: 500,
+    status,
     statusText: "Erro",
     headers: {},
     config,
-    data: { message },
+    data: { codigo, mensagem },
   };
   return Promise.reject(
-    new AxiosError(message, "ERR_DEMO_REQUEST", config, null, response),
+    new AxiosError(mensagem, "ERR_DEMO_REQUEST", config, null, response),
   );
 }
 
@@ -239,29 +442,64 @@ export function rotearAssociadosDemo({
   const rotaAssociados = method === "get" && path === "/associados";
   const rotaConfiguracoes =
     method === "get" && path === "/anuidades/configuracoes";
+  const rotaCriarAssociado = method === "post" && path === "/associados";
+  const rotaAtualizarAssociado = method === "put" && /^\/associados\/\d+$/.test(path);
 
-  if (!rotaAssociados && !rotaConfiguracoes) return null;
+  if (
+    !rotaAssociados &&
+    !rotaConfiguracoes &&
+    !rotaCriarAssociado &&
+    !rotaAtualizarAssociado
+  ) {
+    return null;
+  }
 
   return Promise.resolve()
     .then(() => {
       const db = obterBanco();
       if (rotaConfiguracoes) {
-        return [...db.configuracoes]
-          .sort((a, b) => b.ano - a.ano)
-          .map((configuracao) => ({ ...configuracao }));
+        return {
+          data: [...db.configuracoes]
+            .sort((a, b) => b.ano - a.ano)
+            .map((configuracao) => ({ ...configuracao })),
+          status: 200,
+        };
+      }
+      if (rotaAssociados) {
+        return {
+          data: montarPaginaAssociados(db, {
+            q: params.get("q") || undefined,
+            page: numeroParametro(params, "page"),
+            size: numeroParametro(params, "size"),
+            ano: numeroParametro(params, "ano"),
+            tipo: tipoParametro(params),
+            status: statusParametro(params),
+            idadeMin: numeroParametro(params, "idadeMin"),
+            idadeMax: numeroParametro(params, "idadeMax"),
+          }),
+          status: 200,
+        };
       }
 
-      return montarPaginaAssociados(db, {
-        q: params.get("q") || undefined,
-        page: numeroParametro(params, "page"),
-        size: numeroParametro(params, "size"),
-        ano: numeroParametro(params, "ano"),
-        tipo: tipoParametro(params),
-        status: statusParametro(params),
-        idadeMin: numeroParametro(params, "idadeMin"),
-        idadeMax: numeroParametro(params, "idadeMax"),
-      });
+      const idMatch = path.match(/^\/associados\/(\d+)$/);
+      const id = idMatch ? Number(idMatch[1]) : undefined;
+      const associado = salvarAssociado(db, lerCorpo(config), id);
+      salvarJSON(STORAGE_KEY, db);
+      return {
+        data: associado,
+        status: rotaCriarAssociado ? 201 : 200,
+      };
     })
-    .then((data) => respostaOk(config, data))
-    .catch((erro: unknown) => respostaErro(config, erro));
+    .then(({ data, status }) => respostaOk(config, data, status))
+    .catch((erro: unknown) => {
+      if (erro instanceof AxiosError) return Promise.reject(erro);
+      if (erro instanceof FalhaAssociadoDemo) {
+        return respostaErro(config, erro.status, erro.codigo, erro.message);
+      }
+      const mensagem =
+        erro instanceof Error
+          ? erro.message
+          : "Não foi possível concluir a operação.";
+      return respostaErro(config, 500, "ERRO_DEMO", mensagem);
+    });
 }

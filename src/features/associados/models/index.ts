@@ -4,6 +4,7 @@ export type {
   ConfiguracaoAnuidade,
   ParametrosAssociados,
   RespostaAssociados,
+  SalvarAssociadoPayload,
   StatusAnuidade,
   TipoAssociado,
 } from "./associados";
